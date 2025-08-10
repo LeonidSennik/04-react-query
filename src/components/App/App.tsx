@@ -31,12 +31,11 @@ export default function App() {
     }
   });
 
-
-  useEffect(() => {
-    if (!isLoading && data.results.length === 0) {
-      toast('No movies found for your query.');
-    }
-  }, [isLoading, data,query] );
+ useEffect(() => {
+  if (!isLoading && query && data.results.length === 0) {
+    toast('No movies found for your query.');
+  }
+}, [isLoading, data, query]);
 
   const handleSearchSubmit = (newQuery: string) => {
     const trimmedQuery = newQuery.trim();
