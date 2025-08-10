@@ -19,23 +19,18 @@ export default function App() {
   const [page, setPage] = useState(1);
   const [selectedMovie, setSelectedMovie] = useState<Movie | null>(null);
 
-  const { data, isLoading, error } = useQuery<TMDBResponse>({
+  const { data, isLoading, error, isSuccess } = useQuery<TMDBResponse>({
     queryKey: ['movies', query, page],
     queryFn: () => fetchMovies({ query, page }),
     enabled: !!query,
-    initialData: {
-      page: 1,
-      total_pages: 0,
-      total_results: 0,
-      results: []
-    }
   });
 
- useEffect(() => {
-  if (!isLoading && query && data.results.length === 0) {
-    toast('No movies found for your query.');
-  }
-}, [isLoading, data, query]);
+  
+  useEffect(() => {
+    if (isSuccess && query && data?.total_results === 0) {
+      toast('No movies found for your query.');
+    }
+  }, [isSuccess, query, data]);
 
   const handleSearchSubmit = (newQuery: string) => {
     const trimmedQuery = newQuery.trim();
@@ -48,6 +43,12 @@ export default function App() {
     setPage(1);
   };
 
+  const results = data?.results ?? [];
+  const totalPages = data?.total_pages ?? 0;
+
+  const hasResults = results.length > 0;
+  const hasPagination = totalPages > 1;
+
   return (
     <div className={css.container}>
       <Toaster position="top-right" />
@@ -58,13 +59,13 @@ export default function App() {
       {isLoading && <Loader />}
       {error && <ErrorMessage message="Failed to fetch movies. Please try again." />}
 
-      {data.results.length > 0 && (
+      {hasResults && (
         <>
-          <MovieGrid movies={data.results} onSelect={setSelectedMovie} />
+          <MovieGrid movies={results} onSelect={setSelectedMovie} />
 
-          {data.total_pages > 1 && (
+          {hasPagination && (
             <ReactPaginate
-              pageCount={data.total_pages}
+              pageCount={totalPages}
               pageRangeDisplayed={5}
               marginPagesDisplayed={1}
               onPageChange={({ selected }) => setPage(selected + 1)}
