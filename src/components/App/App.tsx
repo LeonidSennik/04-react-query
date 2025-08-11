@@ -14,23 +14,44 @@ import { fetchMovies } from '../../services/movieService';
 import type { Movie } from '../../types/movie';
 import css from './App.module.css';
 
+const createEmptyTMDBResponse = (): TMDBResponse => ({
+  page: 1,
+  total_pages: 0,
+  total_results: 0,
+  results: []
+});
+
 export default function App() {
   const [query, setQuery] = useState('');
   const [page, setPage] = useState(1);
   const [selectedMovie, setSelectedMovie] = useState<Movie | null>(null);
 
-  const { data, isLoading, error, isSuccess } = useQuery<TMDBResponse>({
-    queryKey: ['movies', query, page],
-    queryFn: () => fetchMovies({ query, page }),
-    enabled: !!query,
-  });
+const {
+  data,
+  error,
+  isSuccess,
+  isError,
+  isFetching,
+} = useQuery<TMDBResponse, Error, TMDBResponse, [string, string, number]>({
+  queryKey: ['movies', query, page],
+  queryFn: () => fetchMovies({ query, page }),
+  enabled: !!query,
+  placeholderData: (prevData) => prevData ?? {
+    page: 1,
+    total_pages: 0,
+    total_results: 0,
+    results: []
+  }
+});
 
   
+  const safeData = data ?? createEmptyTMDBResponse();
+
   useEffect(() => {
-    if (isSuccess && query && data?.total_results === 0) {
+    if (isSuccess && query && safeData.total_results === 0) {
       toast('No movies found for your query.');
     }
-  }, [isSuccess, query, data]);
+  }, [isSuccess, query, safeData]);
 
   const handleSearchSubmit = (newQuery: string) => {
     const trimmedQuery = newQuery.trim();
@@ -41,10 +62,11 @@ export default function App() {
 
     setQuery(trimmedQuery);
     setPage(1);
+    setSelectedMovie(null);
   };
 
-  const results = data?.results ?? [];
-  const totalPages = data?.total_pages ?? 0;
+  const results = safeData.results;
+  const totalPages = safeData.total_pages;
 
   const hasResults = results.length > 0;
   const hasPagination = totalPages > 1;
@@ -56,8 +78,12 @@ export default function App() {
 
       <SearchBar onSubmit={handleSearchSubmit} />
 
-      {isLoading && <Loader />}
-      {error && <ErrorMessage message="Failed to fetch movies. Please try again." />}
+      {isFetching && <Loader />}
+      {isError && (
+        <ErrorMessage
+          message={error instanceof Error ? error.message : 'Failed to fetch movies.'}
+        />
+      )}
 
       {hasResults && (
         <>
