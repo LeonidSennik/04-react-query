@@ -46,12 +46,14 @@ export default function App() {
   });
 
   const safeData = data ?? createEmptyTMDBResponse();
-
-  useEffect(() => {
-    if (hasSearched && isSuccess && safeData.total_results === 0) {
+useEffect(() => {
+  if (isSuccess) {
+    if (hasSearched && safeData.total_results === 0) {
       toast('No movies found for your query.');
-    }
-  }, [hasSearched, isSuccess, safeData]);
+    } 
+  }
+}, [isSuccess, safeData, hasSearched]);
+
 
   const handleSearchSubmit = (newQuery: string) => {
     const trimmedQuery = newQuery.trim();
