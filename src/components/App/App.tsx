@@ -25,33 +25,33 @@ export default function App() {
   const [query, setQuery] = useState('');
   const [page, setPage] = useState(1);
   const [selectedMovie, setSelectedMovie] = useState<Movie | null>(null);
+  const [hasSearched, setHasSearched] = useState(false);
 
-const {
-  data,
-  error,
-  isSuccess,
-  isError,
-  isFetching,
-} = useQuery<TMDBResponse, Error, TMDBResponse, [string, string, number]>({
-  queryKey: ['movies', query, page],
-  queryFn: () => fetchMovies({ query, page }),
-  enabled: !!query,
-  placeholderData: (prevData) => prevData ?? {
-    page: 1,
-    total_pages: 0,
-    total_results: 0,
-    results: []
-  }
-});
+  const {
+    data,
+    error,
+    isSuccess,
+    isError,
+    isFetching,
+  } = useQuery<TMDBResponse, Error, TMDBResponse, [string, string, number]>({
+    queryKey: ['movies', query, page],
+    queryFn: () => fetchMovies({ query, page }),
+    enabled: !!query,
+    placeholderData: (prevData) => prevData ?? {
+      page: 1,
+      total_pages: 0,
+      total_results: 0,
+      results: []
+    }
+  });
 
-  
   const safeData = data ?? createEmptyTMDBResponse();
 
   useEffect(() => {
-    if (isSuccess && query && safeData.total_results === 0) {
+    if (hasSearched && isSuccess && safeData.total_results === 0) {
       toast('No movies found for your query.');
     }
-  }, [isSuccess, query, safeData]);
+  }, [hasSearched, isSuccess, safeData]);
 
   const handleSearchSubmit = (newQuery: string) => {
     const trimmedQuery = newQuery.trim();
@@ -63,6 +63,7 @@ const {
     setQuery(trimmedQuery);
     setPage(1);
     setSelectedMovie(null);
+    setHasSearched(true); 
   };
 
   const results = safeData.results;
@@ -109,5 +110,4 @@ const {
         <MovieModal movie={selectedMovie} onClose={() => setSelectedMovie(null)} />
       )}
     </div>
-  );
-}
+  );}
